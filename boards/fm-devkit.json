@@ -1,19 +1,13 @@
 {
   "build": {
     "core": "esp32",
-    "extra_flags": "-DARDUINO_ESP32_DEV",
+    "extra_flags": "-DARDUINO_fm_devkit",
     "f_cpu": "240000000L",
     "f_flash": "40000000L",
     "flash_mode": "dio",
-    "hwids": [
-      [
-        "0x0403",
-        "0x6010"
-      ]
-    ],
     "ldscript": "esp32_out.ld",
     "mcu": "esp32",
-    "variant": "esp32"
+    "variant": "fm-devkit"
   },
   "connectivity": [
     "wifi",
@@ -22,29 +16,21 @@
     "can"
   ],
   "debug": {
-    "default_tool": "ftdi",
-    "onboard_tools": [
-      "ftdi"
-    ],
-    "openocd_board": "esp32-wrover.cfg"
+    "openocd_board": "esp-wroom-32.cfg"
   },
   "frameworks": [
     "arduino",
     "espidf"
   ],
-  "name": "Espressif ESP-WROVER-KIT",
+  "name": "ESP32 FM DevKit",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,
     "maximum_size": 4194304,
     "protocol": "esptool",
-    "protocols": [
-      "esptool",
-      "ftdi"
-    ],
     "require_upload_port": true,
     "speed": 921600
   },
-  "url": "https://espressif.com/en/products/hardware/esp-wrover-kit/overview",
-  "vendor": "Espressif"
+  "url": "https://github.com/dragon-engineer/esp32_fmdevkit",
+  "vendor": "Unknown"
 }
