@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
+import socket
 import sys
 from os.path import isfile, join
 
@@ -93,6 +93,10 @@ def _update_max_upload_size(env):
     ]
     if sizes:
         env.BoardConfig().update("upload.maximum_size", max(sizes))
+
+
+def _to_unix_slashes(path):
+    return path.replace('\\', '/')
 
 
 #
@@ -296,9 +300,10 @@ if upload_protocol == "esptool":
     # Handle uploading via OTA
     ota_port = None
     if env.get("UPLOAD_PORT"):
-        ota_port = re.match(
-            r"\"?((([0-9]{1,3}\.){3}[0-9]{1,3})|.+\.local)\"?$",
-            env.get("UPLOAD_PORT"))
+        try:
+            ota_port = socket.gethostbyname(env.get("UPLOAD_PORT"))
+        except socket.error:
+            pass
     if ota_port:
         env.Replace(UPLOADCMD="$UPLOADOTACMD")
 
@@ -310,17 +315,19 @@ if upload_protocol == "esptool":
 
 elif upload_protocol in debug_tools:
     openocd_dir = platform.get_package_dir("tool-openocd-esp32") or ""
-    uploader_flags = ["-s", openocd_dir.replace('\\', '/')]
+    uploader_flags = ["-s", _to_unix_slashes(openocd_dir)]
     uploader_flags.extend(
         debug_tools.get(upload_protocol).get("server").get("arguments", []))
-    uploader_flags.extend(["-c", 'program_esp32 "{{$SOURCE}}" 0x10000 verify'])
+    uploader_flags.extend(["-c", 'program_esp32 {{$SOURCE}} 0x10000 verify'])
     for image in env.get("FLASH_EXTRA_IMAGES", []):
         uploader_flags.extend(
-            ["-c", 'program_esp32 "%s" %s verify' % (image[1].replace('\\', '/'), image[0].replace('\\', '/'))])
+            ["-c", 'program_esp32 {{%s}} %s verify' % (
+                _to_unix_slashes(image[1]), image[0])])
     uploader_flags.extend(["-c", "reset run; shutdown"])
     for i, item in enumerate(uploader_flags):
         if "$PACKAGE_DIR" in item:
-            uploader_flags[i] = item.replace("$PACKAGE_DIR", openocd_dir.replace('\\', '/'))
+            uploader_flags[i] = item.replace(
+                "$PACKAGE_DIR", _to_unix_slashes(openocd_dir))
 
     env.Replace(
         UPLOADER="openocd",
@@ -329,7 +336,7 @@ elif upload_protocol in debug_tools:
     upload_actions = [env.VerboseAction("$UPLOADCMD", "Uploading $SOURCE")]
 
 # custom upload tool
-elif "UPLOADCMD" in env:
+elif upload_protocol == "custom":
     upload_actions = [env.VerboseAction("$UPLOADCMD", "Uploading $SOURCE")]
 
 else:

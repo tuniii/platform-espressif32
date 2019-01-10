@@ -9,6 +9,7 @@
     "mcu": "esp32",
     "variant": "esp32"
   },
+  "certified": true,
   "connectivity": [
     "wifi",
     "bluetooth",
@@ -23,7 +24,7 @@
     "arduino",
     "espidf"
   ],
-  "name": "oddWires Proteus IoT-Bus",
+  "name": "oddWires IoT-Bus Proteus",
   "upload": {
     "flash_size": "4MB",
     "maximum_ram_size": 327680,
