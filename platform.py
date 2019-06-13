@@ -30,14 +30,22 @@ class Espressif32Platform(PlatformBase):
         if not result:
             return result
         if id_:
-            return self._add_default_debug_tools(result)
+            return self._add_dynamic_options(result)
         else:
             for key, value in result.items():
-                result[key] = self._add_default_debug_tools(result[key])
+                result[key] = self._add_dynamic_options(result[key])
         return result
 
-    def _add_default_debug_tools(self, board):
-        non_debug_protocols = ["esptool"]
+    def _add_dynamic_options(self, board):
+        # upload protocols
+        if not board.get("upload.protocols", []):
+            board.manifest['upload']['protocols'] = ["esptool", "espota"]
+        if not board.get("upload.protocol", ""):
+            board.manifest['upload']['protocol'] = "esptool"
+
+        # debug tools
+        debug = board.manifest.get("debug", {})
+        non_debug_protocols = ["esptool", "espota"]
         supported_debug_tools = [
             "esp-prog",
             "iot-bus-jtag",
@@ -50,7 +58,6 @@ class Espressif32Platform(PlatformBase):
             "tumpa"
         ]
 
-        debug = board.manifest.get("debug", {})
         upload_protocol = board.manifest.get("upload", {}).get("protocol")
         upload_protocols = board.manifest.get("upload", {}).get(
             "protocols", [])
@@ -58,7 +65,6 @@ class Espressif32Platform(PlatformBase):
             upload_protocols.extend(supported_debug_tools)
         if upload_protocol and upload_protocol not in upload_protocols:
             upload_protocols.append(upload_protocol)
-
         board.manifest['upload']['protocols'] = upload_protocols
 
         if "tools" not in debug:
@@ -78,8 +84,8 @@ class Espressif32Platform(PlatformBase):
 
             server_args = [
                 "-s", "$PACKAGE_DIR/share/openocd/scripts",
-                "-f", "share/openocd/scripts/interface/%s.cfg" % openocd_interface,
-                "-f", "share/openocd/scripts/board/%s" % debug.get("openocd_board")
+                "-f", "interface/%s.cfg" % openocd_interface,
+                "-f", "board/%s" % debug.get("openocd_board")
             ]
 
             debug['tools'][link] = {
